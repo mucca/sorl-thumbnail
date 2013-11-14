@@ -114,8 +114,7 @@ class KVStoreBase(object):
         want to use the ``cleanup`` method instead.
         """
         all_keys = self._find_keys_raw(settings.THUMBNAIL_KEY_PREFIX)
-        if all_keys:
-            self._delete_raw(*all_keys)
+        self._delete_raw(*all_keys)
 
     def _get(self, key, identity='image'):
         """

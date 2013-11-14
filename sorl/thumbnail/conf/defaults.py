@@ -15,6 +15,9 @@ THUMBNAIL_KVSTORE = 'sorl.thumbnail.kvstores.cached_db_kvstore.KVStore'
 # Change this to something else for MSSQL
 THUMBNAIL_KEY_DBCOLUMN = 'key'
 
+# Cache backend to use with cached_db_kvstore
+THUMBNAIL_CACHE_BACKEND = 'default'
+
 # Engine, ships with:
 # sorl.thumbnail.engines.convert_engine.Engine
 # sorl.thumbnail.engines.pil_engine.Engine

@@ -1,14 +1,14 @@
 import re
-
+import urllib2
 from django.core.files.base import File, ContentFile
 from django.core.files.storage import Storage, default_storage
-
+from django.core.urlresolvers import reverse
+from django.utils.encoding import force_unicode
 from django.utils.functional import LazyObject
-
-from sorl.thumbnail import default
-from sorl.thumbnail.compat import json, urlopen, URLError, force_unicode
+from django.utils import simplejson
 from sorl.thumbnail.conf import settings
 from sorl.thumbnail.helpers import ThumbnailError, tokey, get_module_class
+from sorl.thumbnail import default
 from sorl.thumbnail.parsers import parse_geometry
 
 
@@ -24,16 +24,14 @@ def serialize_image_file(image_file):
         'storage': image_file.serialize_storage(),
         'size': image_file.size,
     }
-    return json.dumps(data)
+    return simplejson.dumps(data)
 
 
 def deserialize_image_file(s):
-    data = json.loads(s)
-
+    data = simplejson.loads(s)
     class LazyStorage(LazyObject):
         def _setup(self):
             self._wrapped = get_module_class(data['storage'])()
-
     image_file = ImageFile(data['name'], LazyStorage())
     image_file.set_size(data['size'])
     return image_file
@@ -46,13 +44,11 @@ class BaseImageFile(object):
     @property
     def width(self):
         return self.size[0]
-
     x = width
 
     @property
     def height(self):
         return self.size[1]
-
     y = height
 
     def is_portrait(self):
@@ -65,7 +61,6 @@ class BaseImageFile(object):
     @property
     def url(self):
         raise NotImplemented()
-
     src = url
 
 
@@ -75,13 +70,11 @@ class ImageFile(BaseImageFile):
     def __init__(self, file_, storage=None):
         if not file_:
             raise ThumbnailError('File is empty.')
-
         # figure out name
         if hasattr(file_, 'name'):
             self.name = file_.name
         else:
             self.name = force_unicode(file_)
-
         # figure out storage
         if storage is not None:
             self.storage = storage
@@ -159,7 +152,7 @@ class DummyImageFile(BaseImageFile):
         self.size = parse_geometry(
             geometry_string,
             settings.THUMBNAIL_DUMMY_RATIO,
-        )
+            )
 
     def exists(self):
         return True
@@ -168,17 +161,17 @@ class DummyImageFile(BaseImageFile):
     def url(self):
         return settings.THUMBNAIL_DUMMY_SOURCE % (
             {'width': self.x, 'height': self.y}
-        )
+            )
 
 
 class UrlStorage(Storage):
-    def open(self, name, mode='rb'):
-        return urlopen(name, None, settings.THUMBNAIL_URL_TIMEOUT)
+    def open(self, name):
+        return urllib2.urlopen(name)
 
     def exists(self, name):
         try:
             self.open(name)
-        except URLError:
+        except urllib2.URLError:
             return False
         return True
 
@@ -187,3 +180,4 @@ class UrlStorage(Storage):
 
     def delete(self, name):
         pass
+
